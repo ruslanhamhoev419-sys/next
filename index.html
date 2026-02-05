@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<title>АнтиХаос — Подписатор</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div class="container">
+
+    <!-- ШАПКА -->
+    <header class="app-header">
+        <div class="header-main">
+            <div class="logo-section">
+                <div class="logo"><i class="fas fa-receipt"></i></div>
+                <div class="title-section">
+                    <h1>АнтиХаос</h1>
+                    <p class="tagline">Умный контроль ваших подписок <i class="fas fa-bell premium-icon"></i></p>
+                </div>
+            </div>
+
+            <div class="premium-header" id="premiumHeader">
+                <div class="premium-status-badge" id="premiumBadge">
+                    <i class="fas fa-crown"></i>
+                    <span class="premium-text">Бесплатная версия</span>
+                    <span class="premium-limit">(лимит: 3)</span>
+                </div>
+                <button id="upgradeBtn" class="btn-premium-small"><i class="fas fa-rocket"></i> Премиум</button>
+            </div>
+        </div>
+
+        <div class="reminder-banner" id="reminderBanner" style="display:none">
+            <i class="fas fa-bell"></i>
+            <span>Напоминаем о ваших подписках! Проверьте даты списаний.</span>
+            <button class="close-banner" id="closeBanner">&times;</button>
+        </div>
+    </header>
+
+    <!-- ОСНОВНОЙ КОНТЕНТ -->
+    <main>
+
+        <!-- ПАНЕЛЬ УПРАВЛЕНИЯ -->
+        <section class="control-panel">
+            <div class="control-left">
+                <button id="addSubBtn" class="btn-primary-large">
+                    <i class="fas fa-plus-circle"></i> Добавить подписку
+                </button>
+
+                <div class="quick-stats">
+                    <div class="quick-stat">
+                        <i class="fas fa-calendar-day"></i>
+                        <span id="todaySubs">0 списаний сегодня</span>
+                    </div>
+                    <div class="quick-stat">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span id="expiringSubs">0 скоро списывается</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-summary">
+                <div class="stat-box">
+                    <span class="stat-label"><i class="fas fa-wallet"></i> В месяц</span>
+                    <span class="stat-value" id="monthlyTotal">0 ₽</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label"><i class="fas fa-check-circle"></i> Активных</span>
+                    <span class="stat-value" id="activeCount">0</span>
+                </div>
+                <div class="stat-box limit-box" id="limitBox">
+                    <span class="stat-label"><i class="fas fa-chart-line"></i> Лимит</span>
+                    <span class="stat-value" id="limitCount">0/3</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- СПИСОК ПОДПИСОК -->
+        <section class="subscriptions-section">
+            <div class="section-header">
+                <h2><i class="fas fa-list-alt"></i> Мои подписки</h2>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="all">Все</button>
+                    <button class="filter-btn" data-filter="active">Активные</button>
+                    <button class="filter-btn" data-filter="soon">Скоро списание</button>
+                </div>
+            </div>
+
+            <div class="subscriptions-list" id="subsContainer">
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="fas fa-box-open"></i></div>
+                    <h3>Пока нет подписок</h3>
+                    <p>Добавьте первую подписку, чтобы начать отслеживать расходы</p>
+                    <button id="addFirstSubBtn" class="btn-primary"><i class="fas fa-plus"></i> Добавить первую подписку</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ФУТЕР -->
+    <footer class="app-footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4><i class="fas fa-shield-alt"></i> Безопасность</h4>
+                <p>Все данные хранятся локально на вашем устройстве</p>
+            </div>
+            <div class="footer-section">
+                <h4><i class="fas fa-bell"></i> Напоминания</h4>
+                <p>Получайте уведомления о списаниях</p>
+            </div>
+            <div class="footer-section">
+                <h4><i class="fas fa-crown"></i> Премиум</h4>
+                <p>Неограниченные подписки от 299₽/мес</p>
+                <button id="footerUpgradeBtn" class="btn-premium-text"><i class="fas fa-gem"></i> Узнать больше</button>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>📰 Подписывайтесь на канал: <a href="https://t.me/ruslan_products" target="_blank">@ruslan_products</a></p>
+            <p class="copyright">© 2024 АнтиХаос. Все права защищены.</p>
+        </div>
+    </footer>
+
+    <!-- МОДАЛКА ДОБАВЛЕНИЯ/РЕДАКТИРОВАНИЯ -->
+    <div id="modalOverlay" class="modal-overlay" style="display: none;">
+        <div class="modal subscription-modal">
+            <div class="modal-header">
+                <h3 id="modalTitle">Добавить новую подписку</h3>
+                <button class="modal-close" id="cancelBtn">&times;</button>
+            </div>
+            <form id="subForm">
+                <div class="form-group">
+                    <label for="subName"><i class="fas fa-tag"></i> Название подписки</label>
+                    <input type="text" id="subName" placeholder="Например: Netflix, Spotify, Yandex Plus..." required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label for="subPrice"><i class="fas fa-ruble-sign"></i> Стоимость</label>
+                        <div class="input-with-icon">
+                            <input type="number" id="subPrice" placeholder="0.00" step="0.01" required>
+                            <span class="input-icon">₽</span>
+                        </div>
+                    </div>
+                    <div class="form-group half">
+                        <label for="subCycle"><i class="fas fa-sync-alt"></i> Период</label>
+                        <select id="subCycle">
+                            <option value="monthly">📅 Ежемесячно</option>
+                            <option value="yearly">📆 Ежегодно</option>
+                            <option value="weekly">🗓️ Еженедельно</option>
+                            <option value="quarterly">📊 Ежеквартально</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="subNextDate"><i class="far fa-calendar-alt"></i> Дата следующего списания</label>
+                    <input type="date" id="subNextDate" required>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-palette"></i> Цветовая метка</label>
+                    <div class="color-picker-grid">
+                        <div class="color-option" data-color="#4a6fa5" style="background-color: #4a6fa5;"></div>
+                        <div class="color-option" data-color="#6a93cb" style="background-color: #6a93cb;"></div>
+                        <div class="color-option" data-color="#ff6b6b" style="background-color: #ff6b6b;"></div>
+                        <div class="color-option" data-color="#51cf66" style="background-color: #51cf66;"></div>
+                        <div class="color-option" data-color="#ffd43b" style="background-color: #ffd43b;"></div>
+                        <div class="color-option" data-color="#cc5de8" style="background-color: #cc5de8;"></div>
+                        <input type="color" id="subColor" value="#4a6fa5" class="color-input" style="margin-left:8px;">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="subNotes"><i class="far fa-sticky-note"></i> Примечание (необязательно)</label>
+                    <textarea id="subNotes" placeholder="Логин, email, дополнительные детали..." rows="2"></textarea>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="cancelBtn2"><i class="fas fa-times"></i> Отмена</button>
+                    <button type="submit" class="btn-primary-large"><i class="fas fa-save"></i> Сохранить подписку</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА ПРЕМИУМА -->
+    <div id="premiumModalOverlay" class="modal-overlay" style="display: none;">
+        <div class="modal premium-modal">
+            <div class="premium-header">
+                <div class="crown-container"><i class="fas fa-crown"></i></div>
+                <h2>Премиум Подписка</h2>
+                <p class="premium-subtitle">Откройте все возможности приложения</p>
+            </div>
+
+            <div class="premium-features">
+                <div class="feature-card">
+                    <div class="feature-icon infinity"><i class="fas fa-infinity"></i></div>
+                    <div class="feature-content">
+                        <h4>Неограниченное количество подписок</h4>
+                        <p>Добавляйте столько сервисов, сколько вам нужно</p>
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon chart"><i class="fas fa-chart-pie"></i></div>
+                    <div class="feature-content">
+                        <h4>Расширенная статистика</h4>
+                        <p>Детальные графики расходов и категоризация</p>
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon bell"><i class="fas fa-bell"></i></div>
+                    <div class="feature-content">
+                        <h4>Умные напоминания</h4>
+                        <p>Персональные уведомления о списаниях</p>
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon cloud"><i class="fas fa-cloud-upload-alt"></i></div>
+                    <div class="feature-content">
+                        <h4>Облачная синхронизация</h4>
+                        <p>Доступ к вашим данным с любого устройства</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pricing-section">
+                <h3><i class="fas fa-credit-card"></i> Выберите тариф</h3>
+                <div class="pricing-cards">
+                    <div class="pricing-card selected" data-plan="monthly">
+                        <div class="pricing-header"><i class="fas fa-calendar-alt"></i><h4>Ежемесячно</h4></div>
+                        <div class="price"><span class="amount">299 ₽</span> <span class="period">/ месяц</span></div>
+                        <button class="btn-select-plan" data-plan="monthly">Выбрать</button>
+                    </div>
+
+                    <div class="pricing-card popular" data-plan="yearly">
+                        <div class="popular-badge">ВЫГОДА 20%</div>
+                        <div class="pricing-header"><i class="fas fa-calendar-star"></i><h4>Ежегодно</h4></div>
+                        <div class="price"><span class="amount">2 990 ₽</span> <span class="period">/ год</span></div>
+                        <button class="btn-select-plan" data-plan="yearly">Выбрать</button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top:16px;">
+                <button id="buyPremiumBtn" class="btn-premium-purchase"><i class="fas fa-lock"></i> Перейти к оплате</button>
+                <button id="closePremiumBtn" class="btn-close-premium"><i class="fas fa-times"></i> Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// ------------- State & Constants -------------
+const FREE_LIMIT = 3;
+let subscriptions = JSON.parse(localStorage.getItem('subscriptions')) || [];
+let userData = JSON.parse(localStorage.getItem('userData')) || { premium: false, premiumUntil: null, plan: null };
+let editingId = null;
+let selectedPremiumPlan = 'monthly';
+
+// ------------- DOM -------------
+const dom = {
+    subsContainer: document.getElementById('subsContainer'),
+    addSubBtn: document.getElementById('addSubBtn'),
+    addFirstSubBtn: document.getElementById('addFirstSubBtn'),
+    modalOverlay: document.getElementById('modalOverlay'),
+    cancelBtn: document.getElementById('cancelBtn'),
+    cancelBtn2: document.getElementById('cancelBtn2'),
+    subForm: document.getElementById('subForm'),
+    subName: document.getElementById('subName'),
+    subPrice: document.getElementById('subPrice'),
+    subCycle: document.getElementById('subCycle'),
+    subNextDate: document.getElementById('subNextDate'),
+    subColor: document.getElementById('subColor'),
+    subNotes: document.getElementById('subNotes'),
+    colorOptions: document.querySelectorAll('.color-option'),
+    monthlyTotal: document.getElementById('monthlyTotal'),
+    activeCount: document.getElementById('activeCount'),
+    limitCount: document.getElementById('limitCount'),
+    limitBox: document.getElementById('limitBox'),
+    premiumBadge: document.getElementById('premiumBadge'),
+    upgradeBtn: document.getElementById('upgradeBtn'),
+    footerUpgradeBtn: document.getElementById('footerUpgradeBtn'),
+    premiumModalOverlay: document.getElementById('premiumModalOverlay'),
+    buyPremiumBtn: document.getElementById('buyPremiumBtn'),
+    closePremiumBtn: document.getElementById('closePremiumBtn'),
+    filterButtons: document.querySelectorAll('.filter-btn'),
+    todaySubs: document.getElementById('todaySubs'),
+    expiringSubs: document.getElementById('expiringSubs'),
+    reminderBanner: document.getElementById('reminderBanner'),
+    closeBanner: document.getElementById('closeBanner'),
+};
+
+// ------------- Init -------------
+document.addEventListener('DOMContentLoaded', () => {
+    initDefaults();
+    bindEvents();
+    renderSubscriptions();
+    updateUI();
+});
+
+// set default next date for form
+function initDefaults() {
+    const nextMonth = new Date();
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    dom.subNextDate.value = nextMonth.toISOString().split('T')[0];
+
+    // if any saved subscriptions empty container update
+    if (!subscriptions.length) showEmptyState();
+}
+
+// ------------- Events -------------
+function bindEvents() {
+    dom.addSubBtn?.addEventListener('click', () => openModal());
+    dom.addFirstSubBtn?.addEventListener('click', () => openModal());
+    dom.cancelBtn?.addEventListener('click', closeModal);
+    dom.cancelBtn2?.addEventListener('click', closeModal);
+    dom.modalOverlay?.addEventListener('click', (e) => { if (e.target === dom.modalOverlay) closeModal(); });
+
+    // color options
+    dom.colorOptions.forEach(opt => {
+        opt.addEventListener('click', () => {
+            const color = opt.dataset.color;
+            dom.subColor.value = color;
+            dom.colorOptions.forEach(o => o.classList.remove('active'));
+            opt.classList.add('active');
+        });
+    });
+
+    // color input change: clear active highlights
+    dom.subColor?.addEventListener('input', () => dom.colorOptions.forEach(o => o.classList.remove('active')));
+
+    dom.subForm?.addEventListener('submit', handleFormSubmit);
+
+    // premium handlers
+    dom.upgradeBtn?.addEventListener('click', () => showPremiumModal());
+    dom.footerUpgradeBtn?.addEventListener('click', () => showPremiumModal());
+    dom.premiumModalOverlay?.addEventListener('click', (e) => { if (e.target === dom.premiumModalOverlay) hidePremiumModal(); });
+    dom.closePremiumBtn?.addEventListener('click', hidePremiumModal);
+
+    // pricing card select
+    document.querySelectorAll('.btn-select-plan').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            selectedPremiumPlan = btn.dataset.plan || 'monthly';
+            document.querySelectorAll('.pricing-card').forEach(c => c.classList.remove('selected'));
+            btn.closest('.pricing-card')?.classList.add('selected');
+        });
+    });
+
+    dom.buyPremiumBtn?.addEventListener('click', buyPremium);
+
+    // filters
+    dom.filterButtons.forEach(btn => btn.addEventListener('click', () => {
+        dom.filterButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderSubscriptions(btn.dataset.filter);
+    }));
+
+    // banner close
+    dom.closeBanner?.addEventListener('click', () => dom.reminderBanner.style.display = 'none');
+}
+
+// ------------- Storage -------------
+function saveAll() {
+    localStorage.setItem('subscriptions', JSON.stringify(subscriptions));
+    localStorage.setItem('userData', JSON.stringify(userData));
+}
+
+// ------------- Modal logic -------------
+function openModal(id = null) {
+    editingId = id;
+    if (id) {
+        const s = subscriptions.find(x => x.id == id);
+        if (!s) return;
+        dom.subName.value = s.name;
+        dom.subPrice.value = s.price;
+        dom.subCycle.value = s.cycle;
+        dom.subNextDate.value = s.nextDate;
+        dom.subColor.value = s.color || '#4a6fa5';
+        dom.subNotes.value = s.notes || '';
+        // activate color option highlight if matches
+        dom.colorOptions.forEach(o => o.classList.toggle('active', o.dataset.color === s.color));
+        dom.modalOverlay.style.display = 'flex';
+        document.getElementById('modalTitle').textContent = 'Редактировать подписку';
+    } else {
+        editingId = null;
+        dom.subForm.reset();
+        // default next month
+        const nextMonth = new Date();
+        nextMonth.setMonth(nextMonth.getMonth()+1);
+        dom.subNextDate.value = nextMonth.toISOString().split('T')[0];
+        dom.subColor.value = '#4a6fa5';
+        dom.colorOptions.forEach(o => o.classList.remove('active'));
+        dom.modalOverlay.style.display = 'flex';
+        document.getElementById('modalTitle').textContent = 'Добавить новую подписку';
+    }
+}
+
+function closeModal() {
+    dom.modalOverlay.style.display = 'none';
+    editingId = null;
+    dom.subForm.reset();
+    dom.colorOptions.forEach(o => o.classList.remove('active'));
+}
+
+// ------------- Form submit -------------
+function handleFormSubmit(e) {
+    e.preventDefault();
+
+    // limit check
+    if (!userData.premium && subscriptions.length >= FREE_LIMIT && !editingId) {
+        showLimitModal();
+        return;
+    }
+
+    const data = {
+        id: editingId || Date.now(),
+        name: dom.subName.value.trim(),
+        price: parseFloat(dom.subPrice.value) || 0,
+        cycle: dom.subCycle.value,
+        nextDate: dom.subNextDate.value,
+        color: dom.subColor.value || '#4a6fa5',
+        notes: dom.subNotes.value.trim(),
+        createdAt: editingId ? undefined : new Date().toISOString()
+    };
+
+    if (editingId) {
+        const idx = subscriptions.findIndex(s => s.id == editingId);
+        if (idx !== -1) subscriptions[idx] = { ...subscriptions[idx], ...data };
+    } else {
+        subscriptions.push(data);
+    }
+
+    saveAll();
+    closeModal();
+    renderSubscriptions();
+    updateUI();
+}
+
+// ------------- Render subscriptions -------------
+function renderSubscriptions(filter = 'all') {
+    dom.subsContainer.innerHTML = '';
+
+    if (!subscriptions.length) {
+        showEmptyState();
+        updateUI();
+        return;
+    }
+
+    // filtering
+    const today = new Date();
+    let list = [...subscriptions];
+    if (filter === 'active') list = list.filter(s => s.active !== false);
+    if (filter === 'soon') {
+        const weekLater = new Date(today.getTime() + 7*24*60*60*1000);
+        list = list.filter(s => {
+            const d = new Date(s.nextDate);
+            return d >= today && d <= weekLater;
+        });
+    }
+
+    // sort by nextDate ascending
+    list.sort((a,b) => new Date(a.nextDate) - new Date(b.nextDate));
+
+    list.forEach(s => {
+        const nextDate = new Date(s.nextDate);
+        const daysLeft = Math.ceil((nextDate - new Date()) / (1000*60*60*24));
+        let dateText = '';
+        if (daysLeft < 0) dateText = `Просрочено на ${Math.abs(daysLeft)} дн.`;
+        else if (daysLeft === 0) dateText = 'Сегодня';
+        else dateText = `Через ${daysLeft} дн. • ${formatDate(s.nextDate)}`;
+
+        const el = document.createElement('div');
+        el.className = 'subscription-item';
+        el.dataset.id = s.id;
+        el.style.borderLeft = `6px solid ${s.color || '#4a6fa5'}`;
+        el.innerHTML = `
+            <div class="sub-info">
+                <h4>
+                    <span class="color-dot" style="background:${s.color || '#4a6fa5'}"></span>
+                    ${escapeHtml(s.name)}
+                </h4>
+                <div class="sub-meta">
+                    <div class="meta-item price"><i class="fas fa-ruble-sign"></i> ${s.price.toFixed(2)} ₽</div>
+                    <div class="meta-item">${getCycleText(s.cycle)}</div>
+                    <div class="meta-item date">${dateText}</div>
+                    ${s.notes ? `<div class="meta-item note"><i class="far fa-sticky-note"></i> ${escapeHtml(s.notes)}</div>` : ''}
+                </div>
+            </div>
+            <div class="sub-actions">
+                <button class="action-btn edit" data-id="${s.id}" title="Редактировать"><i class="fas fa-edit"></i></button>
+                <button class="action-btn delete" data-id="${s.id}" title="Удалить"><i class="fas fa-trash-alt"></i></button>
+            </div>
+        `;
+        dom.subsContainer.appendChild(el);
+    });
+
+    // attach handlers
+    dom.subsContainer.querySelectorAll('.action-btn.edit').forEach(btn => btn.addEventListener('click', (e) => {
+        const id = e.currentTarget.dataset.id;
+        openModal(id);
+    }));
+    dom.subsContainer.querySelectorAll('.action-btn.delete').forEach(btn => btn.addEventListener('click', (e) => {
+        const id = e.currentTarget.dataset.id;
+        deleteSubscription(id);
+    }));
+
+    updateUI();
+}
+
+function showEmptyState() {
+    dom.subsContainer.innerHTML = `
+        <div class="empty-state">
+            <div class="empty-icon"><i class="fas fa-box-open"></i></div>
+            <h3>Пока нет подписок</h3>
+            <p>Добавьте первую подписку, чтобы начать отслеживать расходы</p>
+            <button id="addFirstSubBtn_local" class="btn-primary"><i class="fas fa-plus"></i> Добавить первую подписку</button>
+        </div>
+    `;
+    const btn = document.getElementById('addFirstSubBtn_local');
+    if (btn) btn.addEventListener('click', () => openModal());
+}
+
+// ------------- Delete -------------
+function deleteSubscription(id) {
+    if (!confirm('Удалить подписку?')) return;
+    subscriptions = subscriptions.filter(s => s.id != id);
+    saveAll();
+    renderSubscriptions();
+}
+
+// ------------- Premium UI & flow -------------
+function showPremiumModal() {
+    dom.premiumModalOverlay.style.display = 'flex';
+}
+
+function hidePremiumModal() {
+    dom.premiumModalOverlay.style.display = 'none';
+}
+
+// simulate payment and activate premium
+function buyPremium() {
+    // simulate a payment flow; in real — call payment API
+    const plan = selectedPremiumPlan || 'monthly';
+    const days = plan === 'monthly' ? 30 : 365;
+    userData.premium = true;
+    userData.premiumUntil = new Date(Date.now() + days*24*60*60*1000).toISOString();
+    userData.plan = plan;
+    saveAll();
+    hidePremiumModal();
+    // show success / update UI
+    alert('Премиум активирован — спасибо!'); // small feedback
+    renderSubscriptions();
+    updateUI();
+}
+
+// show limit modal (simple alert here or you can create a modal)
+function showLimitModal() {
+    // simple UX: show premium modal from limit path
+    showPremiumModal();
+}
+
+// ------------- UI updates & helpers -------------
+function updateUI() {
+    updateStats();
+    updatePremiumBadge();
+    updateLimitDisplay();
+    updateReminders();
+}
+
+function updateStats() {
+    const monthlyTotal = subscriptions.reduce((sum, s) => {
+        let price = s.price || 0;
+        if (s.cycle === 'yearly') price = price / 12;
+        else if (s.cycle === 'weekly') price = price * 4.33;
+        else if (s.cycle === 'quarterly') price = price / 3;
+        return sum + price;
+    }, 0);
+    dom.monthlyTotal.textContent = `${monthlyTotal.toFixed(2)} ₽`;
+    dom.activeCount.textContent = subscriptions.length;
+}
+
+function updatePremiumBadge() {
+    if (userData.premium) {
+        const until = userData.premiumUntil ? formatDate(userData.premiumUntil) : '';
+        dom.premiumBadge.innerHTML = `<i class="fas fa-crown"></i> <span class="premium-text">Премиум активен</span> ${until ? `<span class="premium-limit">(до ${until})</span>` : ''}`;
+        dom.upgradeBtn.style.display = 'none';
+    } else {
+        dom.premiumBadge.innerHTML = `<i class="fas fa-crown"></i> <span class="premium-text">Бесплатная версия</span> <span class="premium-limit">(лимит: ${FREE_LIMIT})</span>`;
+        dom.upgradeBtn.style.display = 'inline-flex';
+    }
+}
+
+function updateLimitDisplay() {
+    dom.limitCount.textContent = userData.premium ? '∞' : `${subscriptions.length}/${FREE_LIMIT}`;
+    if (!userData.premium && subscriptions.length >= FREE_LIMIT) {
+        dom.limitBox.style.background = '#fff0f0';
+        dom.limitBox.style.borderColor = '#ff6b6b';
+    } else {
+        dom.limitBox.style.background = '';
+        dom.limitBox.style.borderColor = '';
+    }
+}
+
+function updateReminders() {
+    const today = new Date();
+    const todayCount = subscriptions.filter(s => new Date(s.nextDate).toDateString() === today.toDateString()).length;
+    const expiringCount = subscriptions.filter(s => {
+        const days = Math.ceil((new Date(s.nextDate) - today) / (1000*60*60*24));
+        return days > 0 && days <= 7;
+    }).length;
+
+    dom.todaySubs.textContent = `${todayCount} списаний сегодня`;
+    dom.expiringSubs.textContent = `${expiringCount} скоро списывается`;
+    dom.reminderBanner.style.display = (todayCount>0 || expiringCount>0) ? 'flex' : 'none';
+}
+
+// ------------- Helpers -------------
+function formatDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return d.toLocaleDateString('ru-RU', { day:'2-digit', month:'2-digit', year:'numeric' });
+}
+function getCycleText(c) {
+    return { monthly:'Ежемесячно', yearly:'Ежегодно', weekly:'Еженедельно', quarterly:'Ежеквартально' }[c] || c;
+}
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+}
+</script>
+</body>
+</html>
